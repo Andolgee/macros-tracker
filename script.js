@@ -412,3 +412,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadTotals();
     loadEntries();
 });
+
+/* === PWA: service worker === */
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+}
