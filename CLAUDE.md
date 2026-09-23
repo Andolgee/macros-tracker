@@ -4,7 +4,7 @@ Personal macro-tracking web app. Plain HTML/CSS/JS (`index.html`, `style.css`, `
 
 ## Status
 - Migrated from tiiny.host to this GitHub repo, served by GitHub Pages (public repo).
-- Commit 1 done: `Baseline: original app` (the original code, unchanged).
+- Commit 1 done: `Add project context and frequent foods seed` (the original app code, unchanged, plus CLAUDE.md and frequent_foods.csv).
 - **Next: commit 2**: delete the tiiny.host analytics and ad scripts from `index.html` (the `<!-- tracking scripts -->` block, 3 script lines). Nothing else changes.
 - **Then: commit 3 (PWA)**: `manifest.json`, `sw.js`, 192/512 icons, `<head>` links, SW registration in `script.js`. Open question: reuse the old APK's protein-tub icon, or make an orange-on-black one?
 
