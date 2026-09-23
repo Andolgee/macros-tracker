@@ -1,0 +1,76 @@
+/* ===== BASE ===== */
+body{
+    font-family: Courier New, Courier, Lucida Sans Typewriter,
+                 Lucida Typewriter, monospace;
+    background:#000;
+    margin:0;
+    padding:20px;
+}
+.container{
+    max-width:600px;
+    margin:auto;
+    background:#020202;
+    padding:20px;
+    border-radius:8px;
+    box-shadow:0 0 0 1px #c6c5c2;
+}
+
+/* headings → Roboto */
+h1,h2{
+    text-align:center;
+    color:#e84f17;
+    font-family:"Roboto", sans-serif;
+}
+
+/* form controls */
+form{ display:flex; flex-direction:column; color:#e84f17; }
+label{ margin-top:10px; color:#e84f17; }
+input,select,button{
+    padding:10px;
+    margin-top:5px;
+    border-radius:4px;
+    border:1px solid #ddd;
+    background:#c6c5c2;
+    font-family:inherit;
+}
+button{
+    background:#e84f17;
+    color:#fff;
+    border:none;
+    cursor:pointer;
+    margin-top:20px;
+}
+button:hover{ background:#218838; }
+
+/* slim numeric inputs */
+.macro-input{
+    width:120px !important;
+    max-width:100%;
+    font-family:inherit;
+}
+
+/* totals */
+#totals{ margin-top:20px; color:#dedede; }
+#totals p{ font-size:18px; color:#c6c5c2; }
+.left-value.negative{ color:red; }
+
+#reset-totals,#save-csv{ background:#dc3545; margin-top:10px; }
+#reset-totals:hover,#save-csv:hover{ background:#c82333; }
+
+/* ===== FOOD LIST (sentence style) ===== */
+.food-line{
+    margin:4px 0;
+    font-size:0.95rem;
+    color:#dedede;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+.food-name,
+.macro-label{
+    color:#e84f17;          /* same orange as headings */
+    font-weight:600;
+}
+
+/* legacy table styles kept (unused) */
+#food-table{display:none;}
