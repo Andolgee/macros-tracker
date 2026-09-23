@@ -417,3 +417,8 @@ document.addEventListener('DOMContentLoaded', () => {
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
 }
+
+/* === Ask the browser not to auto-clear localStorage === */
+if (navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist();
+}
