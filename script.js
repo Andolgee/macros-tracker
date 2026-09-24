@@ -43,6 +43,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Round for display only (hides float noise like 0.30000000000000004)
     function fmt(n){ return Math.round(n*10)/10; }
 
+    // Today's date as YYYY-MM-DD from the device's local clock (not UTC)
+    function todayKey(){
+        const d = new Date();
+        return d.getFullYear() + '-' +
+               String(d.getMonth()+1).padStart(2,'0') + '-' +
+               String(d.getDate()).padStart(2,'0');
+    }
+
+    // Unique entry id: current time + random characters
+    function newId(){
+        return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+    }
+
     function updateColor(el,val){
         val < 0 ? el.classList.add('negative')
                 : el.classList.remove('negative');
@@ -96,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* === LOCAL STORAGE: entries === */
     function saveEntry(entry){
-        const today = new Date().toLocaleDateString();
+        const today = todayKey();
         const all   = JSON.parse(localStorage.getItem('foodEntries')||'{}');
 
         all[today] = all[today] || [];
@@ -106,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadEntries(){
-        const today = new Date().toLocaleDateString();
+        const today = todayKey();
         const all   = JSON.parse(localStorage.getItem('foodEntries')||'{}');
 
         if(all[today]) all[today].forEach(addLine);
@@ -114,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* === LOCAL STORAGE: daily totals === */
     function saveToLocalTotals(c,ca,pr,f){
-        const today = new Date().toLocaleDateString();
+        const today = todayKey();
         const hist  = JSON.parse(localStorage.getItem('foodHistory')||'{}');
 
         if(!hist[today]){
@@ -135,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function loadTotals(){
-        const today = new Date().toLocaleDateString();
+        const today = todayKey();
         const hist  = JSON.parse(localStorage.getItem('foodHistory')||'{}');
 
         if(hist[today]){
@@ -196,6 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
 
         const entry = {
+            id:       newId(),
             meal:     mealSel.value,
             name:     nameInp.value,
             calories: parseFloat(calInp.value),
@@ -303,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.getItem('foodHistory')||'{}'
         );
 
-        delete hist[new Date().toLocaleDateString()];
+        delete hist[todayKey()];
 
         localStorage.setItem(
             'foodHistory',
@@ -316,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.getItem('foodEntries')||'{}'
         );
 
-        delete all[new Date().toLocaleDateString()];
+        delete all[todayKey()];
 
         localStorage.setItem(
             'foodEntries',
@@ -331,7 +345,7 @@ document.addEventListener('DOMContentLoaded', () => {
        ========================================================= */
 
     csvBtn.addEventListener('click', ()=>{
-        const today = new Date().toLocaleDateString();
+        const today = todayKey();
 
         /* ---------- header + daily totals ---------- */
         const rows = [
