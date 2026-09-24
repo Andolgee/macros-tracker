@@ -40,6 +40,9 @@ document.addEventListener('DOMContentLoaded', () => {
     let targetTotals = { calories:0, carbs:0, proteins:0, fats:0 };
 
     /* === UTILS === */
+    // Round for display only (hides float noise like 0.30000000000000004)
+    function fmt(n){ return Math.round(n*10)/10; }
+
     function updateColor(el,val){
         val < 0 ? el.classList.add('negative')
                 : el.classList.remove('negative');
@@ -51,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const lPr = targetTotals.proteins - dailyTotals.proteins;
         const lF  = targetTotals.fats     - dailyTotals.fats;
 
-        leftCal.textContent = lC;
+        leftCal.textContent = fmt(lC);
         leftCar.textContent = lCa.toFixed(1);
         leftPro.textContent = lPr.toFixed(1);
         leftFat.textContent = lF.toFixed(1);
@@ -68,10 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
         dailyTotals.proteins += pr;
         dailyTotals.fats     += f;
 
-        totCal.textContent = dailyTotals.calories;
-        totCar.textContent = dailyTotals.carbs;
-        totPro.textContent = dailyTotals.proteins;
-        totFat.textContent = dailyTotals.fats;
+        totCal.textContent = fmt(dailyTotals.calories);
+        totCar.textContent = fmt(dailyTotals.carbs);
+        totPro.textContent = fmt(dailyTotals.proteins);
+        totFat.textContent = fmt(dailyTotals.fats);
 
         updateLeft();
     }
@@ -138,10 +141,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if(hist[today]){
             dailyTotals = hist[today];
 
-            totCal.textContent = dailyTotals.calories;
-            totCar.textContent = dailyTotals.carbs;
-            totPro.textContent = dailyTotals.proteins;
-            totFat.textContent = dailyTotals.fats;
+            totCal.textContent = fmt(dailyTotals.calories);
+            totCar.textContent = fmt(dailyTotals.carbs);
+            totPro.textContent = fmt(dailyTotals.proteins);
+            totFat.textContent = fmt(dailyTotals.fats);
 
             updateLeft();
         }
@@ -195,10 +198,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const entry = {
             meal:     mealSel.value,
             name:     nameInp.value,
-            calories: parseInt(calInp.value),
-            carbs:    parseInt(carbInp.value),
-            proteins: parseInt(protInp.value),
-            fats:     parseInt(fatInp.value)
+            calories: parseFloat(calInp.value),
+            carbs:    parseFloat(carbInp.value),
+            proteins: parseFloat(protInp.value),
+            fats:     parseFloat(fatInp.value)
         };
 
         updateTotals(
@@ -232,10 +235,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ){
             saveFrequent(
                 nameInp.value,
-                parseInt(calInp.value),
-                parseInt(carbInp.value),
-                parseInt(protInp.value),
-                parseInt(fatInp.value)
+                parseFloat(calInp.value),
+                parseFloat(carbInp.value),
+                parseFloat(protInp.value),
+                parseFloat(fatInp.value)
             );
 
             loadFrequent();
@@ -266,7 +269,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     setTgtBtn.addEventListener('click', ()=>{
-        const tc = parseInt(tgtCalInp.value);
+        const tc = parseFloat(tgtCalInp.value);
 
         if(!tc) return;
 
