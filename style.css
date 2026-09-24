@@ -72,5 +72,13 @@ button:hover{ background:#218838; }
     font-weight:600;
 }
 
+/* ===== SYNC SETTINGS ===== */
+#sync-settings{ margin-top:30px; color:#e84f17; }
+#sync-settings summary{ cursor:pointer; }
+#sync-settings label,
+#sync-settings input{ display:block; }
+#sync-settings input{ width:100%; box-sizing:border-box; }
+#sync-status{ margin-left:10px; color:#dedede; }
+
 /* legacy table styles kept (unused) */
 #food-table{display:none;}

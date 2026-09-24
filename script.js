@@ -406,6 +406,45 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.removeChild(link);
     });
 
+    /* === SYNC SETTINGS === */
+
+    const syncUrlInp   = document.getElementById('sync-url');
+    const syncTokenInp = document.getElementById('sync-token');
+    const saveSyncBtn  = document.getElementById('save-sync');
+    const testSyncBtn  = document.getElementById('test-sync');
+    const syncStatus   = document.getElementById('sync-status');
+
+    syncUrlInp.value   = localStorage.getItem('syncUrl')   || '';
+    syncTokenInp.value = localStorage.getItem('syncToken') || '';
+
+    saveSyncBtn.addEventListener('click', ()=>{
+        localStorage.setItem('syncUrl',   syncUrlInp.value.trim());
+        localStorage.setItem('syncToken', syncTokenInp.value.trim());
+        saveSyncBtn.textContent = 'Saved';
+        setTimeout(()=>{ saveSyncBtn.textContent = 'Save'; }, 1500);
+    });
+
+    // Tests the values currently in the fields (saved or not)
+    testSyncBtn.addEventListener('click', ()=>{
+        syncStatus.textContent = 'Testing…';
+        fetch(syncUrlInp.value.trim(), {
+            method:'POST',
+            headers:{'Content-Type':'text/plain'},
+            body:JSON.stringify({
+                token:  syncTokenInp.value.trim(),
+                action: 'load',
+                date:   new Date().toLocaleDateString('en-CA')   // YYYY-MM-DD, local
+            })
+        })
+        .then(r=>r.json())
+        .then(res=>{
+            syncStatus.textContent = res.ok ? 'Connected ✓' : 'Error: ' + res.error;
+        })
+        .catch(()=>{
+            syncStatus.textContent = 'Error: could not reach the script';
+        });
+    });
+
     /* === INITIAL LOAD === */
 
     loadFrequent();

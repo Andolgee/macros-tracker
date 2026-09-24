@@ -93,6 +93,18 @@
             <button id="reset-totals">Reset</button>
             <button id="save-csv">Save as CSV</button>
         </div>
+
+        <!-- ========= SYNC SETTINGS ========= -->
+        <details id="sync-settings">
+            <summary>⚙ Sync settings</summary>
+            <label for="sync-url">Apps Script URL:</label>
+            <input type="url" id="sync-url">
+            <label for="sync-token">Token:</label>
+            <input type="password" id="sync-token">
+            <button id="save-sync">Save</button>
+            <button id="test-sync">Test</button>
+            <span id="sync-status"></span>
+        </details>
     </div>
 
     <script src="script.js"></script>
