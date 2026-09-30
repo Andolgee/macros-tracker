@@ -184,6 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 'frequentFoods',
                 JSON.stringify(foods)
             );
+            return true;
         }
     }
 
@@ -234,6 +235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         addLine(entry);
         saveEntry(entry);
+        markDayPending(todayKey());
 
         form.reset();
         freqSelect.value = "";
@@ -247,13 +249,14 @@ document.addEventListener('DOMContentLoaded', () => {
             protInp.value &&
             fatInp.value
         ){
-            saveFrequent(
+            const added = saveFrequent(
                 nameInp.value,
                 parseFloat(calInp.value),
                 parseFloat(carbInp.value),
                 parseFloat(protInp.value),
                 parseFloat(fatInp.value)
             );
+            if(added) markPresetPending(nameInp.value);
 
             loadFrequent();
         }
@@ -287,6 +290,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if(!tc) return;
 
+        applyTarget(tc);
+        localStorage.setItem('targetCalories', tc);
+        markTargetPending();
+    });
+
+    // Target → 40/30/30 macro targets, shown on screen
+    function applyTarget(tc){
         targetTotals.calories = tc;
         targetTotals.carbs    = (tc*0.4)/4;
         targetTotals.proteins = (tc*0.3)/4;
@@ -298,7 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tgtFat.textContent = targetTotals.fats.toFixed(1);
 
         updateLeft();
-    });
+    }
 
     resetBtn.addEventListener('click', ()=>{
         dailyTotals = {
@@ -338,6 +348,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
 
         updateLeft();
+        markDayPending(todayKey());
     });
 
     /* =========================================================
@@ -439,6 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('syncToken', syncTokenInp.value.trim());
         saveSyncBtn.textContent = 'Saved';
         setTimeout(()=>{ saveSyncBtn.textContent = 'Save'; }, 1500);
+        runSync(true);
     });
 
     // Tests the values currently in the fields (saved or not)
@@ -462,11 +474,207 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    /* === SYNC === */
+    // localStorage stays the source of truth; the Sheet gets a copy.
+    // Unsynced changes are listed in localStorage and retried until the Sheet confirms them.
+
+    function readJSON(key, fallback){
+        return JSON.parse(localStorage.getItem(key) || fallback);
+    }
+
+    function markDayPending(date){
+        const days = readJSON('pendingDays','[]');
+        if(!days.includes(date)) days.push(date);
+        localStorage.setItem('pendingDays', JSON.stringify(days));
+        scheduleSync();
+    }
+
+    function markPresetPending(name){
+        const names = readJSON('pendingPresets','[]');
+        if(!names.includes(name)) names.push(name);
+        localStorage.setItem('pendingPresets', JSON.stringify(names));
+        scheduleSync();
+    }
+
+    function markTargetPending(){
+        localStorage.setItem('pendingTarget','1');
+        scheduleSync();
+    }
+
+    // Wait 2s after the last change so a burst of edits becomes one sync
+    let syncTimer = null;
+    function scheduleSync(){
+        clearTimeout(syncTimer);
+        syncTimer = setTimeout(()=>runSync(false), 2000);
+    }
+
+    // One request to the Apps Script; throws on network error, timeout or {ok:false}
+    function callSheet(body){
+        const ctrl  = new AbortController();
+        const timer = setTimeout(()=>ctrl.abort(), 15000);
+
+        return fetch(localStorage.getItem('syncUrl'), {
+            method:'POST',
+            headers:{'Content-Type':'text/plain'},
+            body:JSON.stringify(Object.assign({ token:localStorage.getItem('syncToken') }, body)),
+            signal:ctrl.signal
+        })
+        .then(r=>r.json())
+        .then(res=>{
+            if(!res.ok) throw new Error(res.error);
+            return res;
+        })
+        .finally(()=>clearTimeout(timer));
+    }
+
+    let syncing = false, syncAgain = false, pullAgain = false;
+
+    // pull = also fetch presets + target from the Sheet
+    async function runSync(pull){
+        if(!localStorage.getItem('syncUrl') || !localStorage.getItem('syncToken')) return;
+        if(syncing){ syncAgain = true; pullAgain = pullAgain || pull; return; }
+
+        syncing = true;
+        try{
+            if(!localStorage.getItem('syncReady')) await restore();
+            await pushPending();
+            if(pull) await pullSettings();
+        }catch(err){
+            // Offline or error: pending items stay and are retried at the next trigger
+            console.warn('Sync failed:', err.message);
+        }finally{
+            syncing = false;
+            if(syncAgain){
+                const p = pullAgain;
+                syncAgain = pullAgain = false;
+                runSync(p);
+            }
+        }
+    }
+
+    // Send every pending item; one failing item doesn't block the others
+    async function pushPending(){
+        // Days: the Sheet replaces that date's rows with this full list
+        for(const date of readJSON('pendingDays','[]')){
+            try{
+                const sent = JSON.stringify(readJSON('foodEntries','{}')[date] || []);
+                await callSheet({
+                    action:  'saveDay',
+                    date,
+                    entries: JSON.parse(sent),
+                    target:  parseFloat(localStorage.getItem('targetCalories')) || null
+                });
+                // Clear only if the day didn't change while the request was in flight
+                if(JSON.stringify(readJSON('foodEntries','{}')[date] || []) === sent){
+                    const days = readJSON('pendingDays','[]').filter(d=>d!==date);
+                    localStorage.setItem('pendingDays', JSON.stringify(days));
+                }
+            }catch(err){ console.warn('Day sync failed:', date, err.message); }
+        }
+
+        if(localStorage.getItem('pendingTarget')){
+            try{
+                const target = localStorage.getItem('targetCalories');
+                await callSheet({ action:'saveTarget', target:parseFloat(target) });
+                if(localStorage.getItem('targetCalories') === target) localStorage.removeItem('pendingTarget');
+            }catch(err){ console.warn('Target sync failed:', err.message); }
+        }
+
+        for(const name of readJSON('pendingPresets','[]')){
+            try{
+                const p = readJSON('frequentFoods','[]').find(x=>x.name===name);
+                if(p) await callSheet({
+                    action:'savePreset',
+                    preset:{ name:p.name, calories:p.calories, carbs:p.carbs, proteins:p.proteins, fats:p.fats }
+                });
+                const names = readJSON('pendingPresets','[]').filter(n=>n!==name);
+                localStorage.setItem('pendingPresets', JSON.stringify(names));
+            }catch(err){ console.warn('Preset sync failed:', name, err.message); }
+        }
+    }
+
+    // Presets + target from the Sheet, unless the phone has unsynced changes to them
+    async function pullSettings(){
+        const res = await callSheet({ action:'load', date:todayKey() });
+
+        if(!readJSON('pendingPresets','[]').length){
+            localStorage.setItem('frequentFoods', JSON.stringify(res.presets));
+            loadFrequent();
+        }
+        if(!localStorage.getItem('pendingTarget') && res.target){
+            localStorage.setItem('targetCalories', res.target);
+            applyTarget(res.target);
+        }
+    }
+
+    // First sync on this device (fresh install or cleared data): merge in what the Sheet has
+    async function restore(){
+        const date = todayKey();
+        const res  = await callSheet({ action:'load', date });
+
+        // Today's entries: keep the phone's, add the Sheet's that aren't here (matched by id)
+        const all   = readJSON('foodEntries','{}');
+        const local = all[date] || [];
+        const added = res.entries
+            .filter(e=>!local.some(l=>l.id===e.id))
+            .map(({id,meal,name,calories,carbs,proteins,fats})=>({id,meal,name,calories,carbs,proteins,fats}));
+        all[date] = local.concat(added);
+        localStorage.setItem('foodEntries', JSON.stringify(all));
+        if(local.some(l=>!res.entries.some(e=>e.id===l.id))) markDayPending(date);
+        if(added.length) rebuildToday();
+
+        // Presets: the Sheet's plus any only on the phone (those get uploaded)
+        const localOnly = readJSON('frequentFoods','[]')
+            .filter(p=>!res.presets.some(s=>s.name===p.name));
+        localStorage.setItem('frequentFoods', JSON.stringify(res.presets.concat(localOnly)));
+        localOnly.forEach(p=>markPresetPending(p.name));
+        loadFrequent();
+
+        // Target: keep the phone's if it has one
+        if(!localStorage.getItem('targetCalories') && res.target){
+            localStorage.setItem('targetCalories', res.target);
+            applyTarget(res.target);
+        }
+
+        localStorage.setItem('syncReady','1');
+        if(added.length) alert("Restored today's entries from Sheet");
+    }
+
+    // Recompute today's totals from its entries and redraw the list
+    function rebuildToday(){
+        const date    = todayKey();
+        const entries = readJSON('foodEntries','{}')[date] || [];
+        const hist    = readJSON('foodHistory','{}');
+
+        hist[date] = { calories:0, carbs:0, proteins:0, fats:0 };
+        entries.forEach(e=>{
+            hist[date].calories += e.calories;
+            hist[date].carbs    += e.carbs;
+            hist[date].proteins += e.proteins;
+            hist[date].fats     += e.fats;
+        });
+        localStorage.setItem('foodHistory', JSON.stringify(hist));
+
+        foodList.innerHTML = '';
+        loadTotals();
+        loadEntries();
+    }
+
+    window.addEventListener('online', ()=>runSync(false));
+    document.addEventListener('visibilitychange', ()=>{
+        if(document.visibilityState === 'visible') runSync(true);
+    });
+
     /* === INITIAL LOAD === */
 
     loadFrequent();
     loadTotals();
     loadEntries();
+
+    const savedTarget = parseFloat(localStorage.getItem('targetCalories'));
+    if(savedTarget) applyTarget(savedTarget);
+
+    runSync(true);
 });
 
 /* === PWA: service worker === */
