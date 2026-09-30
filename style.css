@@ -64,6 +64,7 @@ input:focus,select:focus{ border-color:var(--orange); outline:none; }
 .macros{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; }
 .macros input{ text-align:right; font-variant-numeric:tabular-nums; }
 .btns{ display:grid; grid-template-columns:1.6fr 1fr; gap:8px; }
+#food-form .btns{ grid-template-columns:1fr 1.6fr; }   /* Save preset (narrow) left, + Add (wide) right */
 
 button{
     font:inherit;
