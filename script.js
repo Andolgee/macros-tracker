@@ -519,16 +519,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const testSyncBtn  = document.getElementById('test-sync');
     const syncStatus   = document.getElementById('sync-status');
 
+    const sheetUrlInp  = document.getElementById('sheet-url');
+    const openSheetBtn = document.getElementById('open-sheet');
+
     syncUrlInp.value   = localStorage.getItem('syncUrl')   || '';
     syncTokenInp.value = localStorage.getItem('syncToken') || '';
+    sheetUrlInp.value  = localStorage.getItem('sheetUrl')  || '';
 
     saveSyncBtn.addEventListener('click', ()=>{
         localStorage.setItem('syncUrl',   syncUrlInp.value.trim());
         localStorage.setItem('syncToken', syncTokenInp.value.trim());
+        localStorage.setItem('sheetUrl',  sheetUrlInp.value.trim());
         saveSyncBtn.textContent = 'Saved';
         setTimeout(()=>{ saveSyncBtn.textContent = 'Save'; }, 1500);
         updateSyncUI();
         runSync(true);
+    });
+
+    // Opens the Google Sheet logbook (link typed in the field, saved or not)
+    openSheetBtn.addEventListener('click', ()=>{
+        const url = sheetUrlInp.value.trim();
+        if(!/^https:\/\//.test(url)){
+            openSheetBtn.textContent = 'Add the sheet link first';
+            setTimeout(()=>{ openSheetBtn.textContent = 'Open sheet ↗'; }, 1500);
+            return;
+        }
+        window.open(url, '_blank', 'noopener');
     });
 
     // Tests the values currently in the fields (saved or not)
