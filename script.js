@@ -519,28 +519,25 @@ document.addEventListener('DOMContentLoaded', () => {
     const testSyncBtn  = document.getElementById('test-sync');
     const syncStatus   = document.getElementById('sync-status');
 
-    const sheetUrlInp  = document.getElementById('sheet-url');
     const openSheetBtn = document.getElementById('open-sheet');
 
     syncUrlInp.value   = localStorage.getItem('syncUrl')   || '';
     syncTokenInp.value = localStorage.getItem('syncToken') || '';
-    sheetUrlInp.value  = localStorage.getItem('sheetUrl')  || '';
 
     saveSyncBtn.addEventListener('click', ()=>{
         localStorage.setItem('syncUrl',   syncUrlInp.value.trim());
         localStorage.setItem('syncToken', syncTokenInp.value.trim());
-        localStorage.setItem('sheetUrl',  sheetUrlInp.value.trim());
         saveSyncBtn.textContent = 'Saved';
         setTimeout(()=>{ saveSyncBtn.textContent = 'Save'; }, 1500);
         updateSyncUI();
         runSync(true);
     });
 
-    // Opens the Google Sheet logbook (link typed in the field, saved or not)
+    // Opens the Google Sheet logbook (link comes from the script during sync)
     openSheetBtn.addEventListener('click', ()=>{
-        const url = sheetUrlInp.value.trim();
+        const url = localStorage.getItem('sheetUrl') || '';
         if(!/^https:\/\//.test(url)){
-            openSheetBtn.textContent = 'Add the sheet link first';
+            openSheetBtn.textContent = 'Sync first';
             setTimeout(()=>{ openSheetBtn.textContent = 'Open sheet ↗'; }, 1500);
             return;
         }
@@ -722,6 +719,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Presets + target from the Sheet, unless the phone has unsynced changes to them
     async function pullSettings(){
         const res = await callSheet({ action:'load', date:todayKey() });
+        if(res.url) localStorage.setItem('sheetUrl', res.url);
 
         if(!readJSON('pendingPresets','[]').length){
             localStorage.setItem('frequentFoods', JSON.stringify(res.presets));
@@ -737,6 +735,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function restore(){
         const date = todayKey();
         const res  = await callSheet({ action:'load', date });
+        if(res.url) localStorage.setItem('sheetUrl', res.url);
 
         // Today's entries: keep the phone's, add the Sheet's that aren't here (matched by id)
         const all   = readJSON('foodEntries','{}');
