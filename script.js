@@ -30,8 +30,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const leftPro = document.getElementById('left-proteins');
     const leftFat = document.getElementById('left-fats');
 
-    const resetBtn = document.getElementById('reset-totals');
-    const csvBtn   = document.getElementById('save-csv');
+    const resetBtn   = document.getElementById('reset-totals');
+    const syncNowBtn = document.getElementById('sync-now');
+    const lastSyncEl = document.getElementById('last-sync');
+    const syncBadge  = document.getElementById('sync-badge');
 
     const foodList = document.getElementById('food-list');
 
@@ -344,7 +346,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateLeft();
     }
 
-    resetBtn.addEventListener('click', ()=>{
+    resetBtn.addEventListener('click', ()=>armed(resetBtn, 'Reset day', resetDay));
+
+    function resetDay(){
         dailyTotals = {
             calories:0,
             carbs:0,
@@ -383,89 +387,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateLeft();
         markDayPending(todayKey());
-    });
+    }
 
-    /* =========================================================
-       CSV BUTTON HANDLER — totals + entries (NO meal column)
-       ========================================================= */
-
-    csvBtn.addEventListener('click', ()=>{
-        const today = todayKey();
-
-        /* ---------- header + daily totals ---------- */
-        const rows = [
-            [
-                'Date',
-                'Calories',
-                'Carbohydrates',
-                'Proteins',
-                'Fats'
-            ],
-
-            [
-                today,
-                dailyTotals.calories,
-                dailyTotals.carbs,
-                dailyTotals.proteins,
-                dailyTotals.fats
-            ],
-
-            [],
-
-            [
-                'Date',
-                'Food',
-                'Calories',
-                'Carbohydrates',
-                'Proteins',
-                'Fats'
-            ]
-        ];
-
-        /* -------- append individual entries -------- */
-
-        const all = JSON.parse(
-            localStorage.getItem('foodEntries')||'{}'
-        );
-
-        const dayEntries = all[today] || [];
-
-        dayEntries.forEach(en=>{
-            rows.push([
-                today,
-                en.name.replace(/,/g,' '),
-                en.calories,
-                en.carbs,
-                en.proteins,
-                en.fats
-            ]);
-        });
-
-        /* Convert to CSV text */
-
-        const csvString =
-            rows.map(r=>r.join(',')).join('\r\n');
-
-        /* Save via Blob */
-
-        const blob = new Blob(
-            [csvString],
-            { type:'text/csv;charset=utf-8' }
-        );
-
-        const url = URL.createObjectURL(blob);
-
-        const link = document.createElement('a');
-
-        link.href = url;
-        link.download =
-            `food_log_${today.replace(/\//g,'-')}.csv`;
-
-        document.body.appendChild(link);
-        link.click();
-
-        URL.revokeObjectURL(url);
-        document.body.removeChild(link);
+    syncNowBtn.addEventListener('click', async ()=>{
+        syncNowBtn.textContent = 'Syncing…';
+        await runSync(true);
+        syncNowBtn.textContent = 'Sync now';
     });
 
     /* === EDIT / DELETE ENTRY === */
@@ -600,6 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('syncToken', syncTokenInp.value.trim());
         saveSyncBtn.textContent = 'Saved';
         setTimeout(()=>{ saveSyncBtn.textContent = 'Save'; }, 1500);
+        updateSyncUI();
         runSync(true);
     });
 
@@ -651,9 +579,39 @@ document.addEventListener('DOMContentLoaded', () => {
         scheduleSync();
     }
 
+    function hasPending(){
+        return readJSON('pendingDays','[]').length > 0 ||
+               readJSON('pendingPresets','[]').length > 0 ||
+               !!localStorage.getItem('pendingTarget');
+    }
+
+    // Header badge (● synced / ● unsynced) and "last sync" under Sync now; hidden if sync isn't set up
+    function updateSyncUI(){
+        const configured = localStorage.getItem('syncUrl') && localStorage.getItem('syncToken');
+        syncBadge.hidden = !configured;
+
+        if(!configured){
+            lastSyncEl.textContent = 'sync not set up';
+            return;
+        }
+
+        const pending = hasPending();
+        syncBadge.textContent = pending ? '● unsynced' : '● synced';
+        syncBadge.className   = pending ? 'warn' : 'ok';
+
+        const t = parseInt(localStorage.getItem('lastSync'));
+        if(!t){ lastSyncEl.textContent = ''; return; }
+        const d = new Date(t);
+        const time = d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+        lastSyncEl.textContent = 'last sync ' + (d.toDateString() === new Date().toDateString()
+            ? time
+            : d.toLocaleDateString([], { day:'numeric', month:'short' }) + ' ' + time);
+    }
+
     // Wait 2s after the last change so a burst of edits becomes one sync
     let syncTimer = null;
     function scheduleSync(){
+        updateSyncUI();
         clearTimeout(syncTimer);
         syncTimer = setTimeout(()=>runSync(false), 2000);
     }
@@ -689,11 +647,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if(!localStorage.getItem('syncReady')) await restore();
             await pushPending();
             if(pull) await pullSettings();
+            if(!hasPending()) localStorage.setItem('lastSync', Date.now());
         }catch(err){
             // Offline or error: pending items stay and are retried at the next trigger
             console.warn('Sync failed:', err.message);
         }finally{
             syncing = false;
+            updateSyncUI();
             if(syncAgain){
                 const p = pullAgain;
                 syncAgain = pullAgain = false;
@@ -827,6 +787,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const savedTarget = parseFloat(localStorage.getItem('targetCalories'));
     if(savedTarget) applyTarget(savedTarget);
 
+    updateSyncUI();
     runSync(true);
 });
 

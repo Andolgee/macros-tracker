@@ -24,7 +24,7 @@
         <!-- ========= HEADER ========= -->
         <header class="top">
             <h1 class="brand">FOOD_TRACKER<span class="cursor">_</span></h1>
-            <div class="meta"><span id="today-date"></span></div>
+            <div class="meta"><span id="today-date"></span><br><span id="sync-badge" hidden></span></div>
         </header>
 
         <!-- ========= INPUT ========= -->
@@ -120,10 +120,11 @@
             </div>
         </section>
 
-        <!-- ========= RESET / CSV ========= -->
+        <!-- ========= RESET / SYNC NOW ========= -->
         <div class="foot">
-            <button id="reset-totals">Reset</button>
-            <button id="save-csv" class="ghost">Save as CSV</button>
+            <button id="reset-totals" class="danger">Reset day</button>
+            <button id="sync-now" class="ghost">Sync now</button>
+            <span id="last-sync" class="syncline"></span>
         </div>
 
         <!-- ========= SYNC SETTINGS ========= -->

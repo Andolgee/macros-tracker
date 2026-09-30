@@ -138,10 +138,16 @@ button.ghost:hover{ background:#1a0d07; }
 .target-row{ display:grid; grid-template-columns:1fr auto; gap:8px; align-items:end; }
 .target-row button{ padding-inline:18px; }
 
-/* ===== RESET / CSV ===== */
+/* ===== RESET / SYNC NOW ===== */
 .foot{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-#reset-totals{ background:transparent; color:var(--red); border-color:#5a1f19; }
-#reset-totals:hover{ background:#1a0605; }
+.syncline{
+    grid-column:2; margin-top:-2px;
+    color:var(--mute); font-size:11px; text-align:right;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    font-variant-numeric:tabular-nums;
+}
+#sync-badge.ok{ color:#7bc47f; }
+#sync-badge.warn{ color:var(--orange); }
 
 /* ===== SYNC SETTINGS ===== */
 #sync-settings{ border-top:1px dashed var(--line); padding-top:12px; color:var(--mute); }
