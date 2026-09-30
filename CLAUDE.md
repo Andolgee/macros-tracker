@@ -57,7 +57,7 @@ Personal macro-tracking PWA. Plain HTML/CSS/JS (`index.html`, `style.css`, `scri
 - Order: header (`FOOD_TRACKER_` + date + sync badge) → ADD FOOD form → TOTALS → TODAY → TARGET → Reset day / Sync now → ⚙ Sync settings.
 - Tokens: bg `#000`, text `#dedede`, muted `#8e8c87`, lines `#2a2927`, fields `#111`, orange `#e84f17`, red `#ff4b3a`. Macro colours: carbs `#e9b44c`, protein `#e84f17`, fats `#5fb3a3`; kcal white.
 - Font: IBM Plex Mono from Google Fonts. The offline fallback (Courier New / phone monospace) is accepted; don't self-host.
-- Form: preset select; meal + name; one row of four inputs `KCAL / CARBS g / PROT g / FATS g`; `+ Add` and `Save preset` (shows "Preset exists" on a duplicate name; adding food never checks presets).
+- Form: preset select; meal + name; one row of four inputs `KCAL / CARBS g / PROT g / FATS g`; button row with `Save preset` on the left (narrow; shows "Preset exists" on a duplicate name) and `+ Add` on the right (wide). Adding food never checks presets.
 - Totals: 2×2 tiles (KCAL, CARBS, PROT, FATS) whose background fills left to right in the macro colour; over target → red fill, red edge and a slight glow. The target field shows the current target.
 - Today: two-line rows (name + kcal; meal · g C · g P · g F, with C/P/F letters in macro colours). Tapping a row opens the editor sheet.
 - Editor: never auto-focus a field (no keyboard pop-up). Save, Cancel, Delete (two-tap). Star at the right end of the EDIT ENTRY heading: ☆ if no preset has the current name (tap saves the editor's values as a preset), ★ if one exists (tap does nothing).
