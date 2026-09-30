@@ -1,61 +1,88 @@
 # Food Tracker — Project Context for Claude Code
 
-Personal macro-tracking web app. Plain HTML/CSS/JS (`index.html`, `style.css`, `script.js`), no framework, no build step. Personal use only; nothing gets published to an app store.
+Personal macro-tracking PWA. Plain HTML/CSS/JS (`index.html`, `style.css`, `script.js`), no framework, no build step. Served by GitHub Pages from this public repo: https://andolgee.github.io/macros-tracker/. Personal use only.
 
 ## Status
-- Migrated from tiiny.host to this GitHub repo, served by GitHub Pages (public repo).
-- Commit 1 done: `Add project context and frequent foods seed` (the original app code, unchanged, plus CLAUDE.md and frequent_foods.csv).
-- **Next: commit 2**: delete the tiiny.host analytics and ad scripts from `index.html` (the `<!-- tracking scripts -->` block, 3 script lines). Nothing else changes.
-- **Then: commit 3 (PWA)**: `manifest.json`, `sw.js`, 192/512 icons, `<head>` links, SW registration in `script.js`. Open question: reuse the old APK's protein-tub icon, or make an orange-on-black one?
+- Done: tiiny.host → GitHub Pages; PWA (installable, offline); Google Sheet sync via Apps Script; decimals; edit/delete entries; UI overhaul.
+- Real Sheet ("Food Tracker") is live on the phone. The dev Sheet ("Food Tracker (dev)") is for testing; the PC's Live Server points at it.
+- Remaining, later: Wear OS Tile showing consumed vs target macros, reading the script's `load` action (GET is allowed for `load` only).
 
-## Approved changes (build list)
-1. Host on GitHub Pages instead of tiiny.host
-2. Convert the APK to a PWA (installable, full-screen, offline-capable)
-3. Google Sheet as the data store instead of localStorage (Apps Script latency is acceptable)
-4. Edit and delete single food entries
-5. Timestamp each entry logged to the Sheet (the Sheet doubles as a logbook for tracking progress)
-6. Decimal input (`parseFloat` instead of `parseInt`)
-7. UI overhaul, with live preview during development (mockups first, then implement)
+## Files
+- `index.html`, `style.css`, `script.js`: the app.
+- `sw.js`: service worker. Network-first with `cache:'no-cache'` (always revalidates when online), falls back to cache offline. Bump `CACHE` when the asset list changes.
+- `manifest.json`, `icons/icon-192.png`, `icons/icon-512.png`: PWA (standalone, black theme, old APK's protein-tub icon, transparent).
+- `apps-script/Code.gs`: backend source. Pasted into each Sheet's Apps Script editor by the user; the repo copy is for version history.
+- `frequent_foods.csv`: original 14-preset seed (already imported into both Sheets).
 
-Secondary, later: Wear OS Tile showing consumed/target macros, reading from the same Apps Script `doGet`.
+## Architecture: local-first sync
+- **localStorage is the source of truth.** The app shows today only (by date key) and never depends on the Sheet for display. A new day starts a fresh list.
+- **The Sheet is the logbook.** ~2s after any change (debounced), the app sends that day's full entry list (`saveDay`); the script replaces that date's rows. Retries are always safe (full snapshot, last one wins).
+- **Pending lists** in localStorage (`pendingDays`, `pendingPresets`, `pendingTarget`) hold unsynced work. An item clears only when the Sheet confirms it and it didn't change mid-request. One failing item doesn't block others.
+- **Triggers:** change (+2s), app open, `online`, returning to the app (`visibilitychange`), Sync now, saving sync settings.
+- **Pull:** on open / return / Sync now, presets and target come from the Sheet unless the phone has unsynced changes to them. So the user can edit presets and the target in the Sheet.
+- **Restore:** if the `syncReady` marker is missing (fresh install or cleared data), the first sync loads today's entries, presets and target from the Sheet, merges entries by id, shows a one-time "Restored today's entries from Sheet" alert, and holds today's sync until the restore succeeds.
+- **Dates come from the phone** (`todayKey()`: local `YYYY-MM-DD`, not UTC). The user travels; the script never decides "today". No timestamps are stored.
+- The app edits **today only** (no backfill). Past days are safe to edit directly in the Sheet; today's rows are overwritten by the next in-app change.
 
-## Build order
-1. ~~Baseline commit~~ → remove tiiny scripts → PWA
-2. Sheet backend: Apps Script web app (`doPost`: add/edit/delete/reset/save-preset/backfill; `doGet`: today's totals + targets + presets). Entry IDs, ISO dates (`YYYY-MM-DD`) and timestamps for Sheet rows, decimals, target persisted in the Sheet, local cache + offline retry queue.
-3. Import `frequent_foods.csv` into the Sheet's Frequent Foods tab (one-time migration).
-4. UI overhaul + edit/delete together (so the controls are designed in, not bolted on).
-5. Wear OS (later).
+## localStorage keys
+- `foodEntries`: `{ 'YYYY-MM-DD': [{ id, meal, name, calories, carbs, proteins, fats }] }`
+- `foodHistory`: per-date totals (kept in step with entries; `rebuildToday()` recomputes today's)
+- `frequentFoods`: presets `[{ name, calories, carbs, proteins, fats }]` (name is the key)
+- `targetCalories`: calorie target; macro targets use a fixed 40/30/30 C/P/F split
+- `syncUrl`, `syncToken`: entered in ⚙ Sync settings; device-only
+- `sheetUrl`: the Sheet's link, returned by `load`; used by Open sheet
+- `pendingDays`, `pendingPresets`, `pendingTarget`, `syncReady`, `lastSync`: sync state
 
-## Sheet/Apps Script rules
-- Apps Script deployed as "Execute as: Me, Access: Anyone"; require a secret token on every request.
-- **Never commit the Apps Script URL or token** (public repo). The user enters them once in an in-app settings field; stored in localStorage on the phone only.
-- POST as `Content-Type: text/plain` with a JSON string body to avoid CORS preflight.
-- Set the script timezone so "today" matches the user's.
-- Use a separate dev Sheet during development so test entries stay out of the real logbook.
+## Google Sheet layout (tab and header names must match exactly)
+- `Entries`: id | date | meal | name | calories | carbs | proteins | fats (A–D plain text). Alternating-day shading via conditional formatting; no blank rows.
+- `Frequent Foods`: name | calories | carbs | proteins | fats (A plain text)
+- `Settings`: key | value; `target_calories` in B2
+- `Daily Targets`: date | target_calories (written by `saveDay`; A plain text)
+- `Daily Totals`: formula-only. QUERY in A1 (date, summed macros, entry count), ARRAYFORMULA in G1 (that day's target calories + 40/30/30 macro targets). Never type in it.
 
-## Current data model (old app)
-- localStorage `foodEntries`: `{ [dateKey]: [{meal, name, calories, carbs, proteins, fats}] }`
-- localStorage `foodHistory`: per-date totals
-- localStorage `frequentFoods`: presets
-- `dateKey` = `new Date().toLocaleDateString()` (locale-dependent; keep for legacy, use ISO for the Sheet)
-- Macro targets from the calorie target via a fixed 40/30/30 C/P/F split. The target is not persisted (resets on refresh).
-- Known issues: duplicate `c` key in `saveFrequent()`; `parseInt` truncates decimals; commas stripped from names in the CSV export.
+## Apps Script API (`apps-script/Code.gs`)
+- POST, `Content-Type: text/plain`, JSON body (avoids CORS preflight). Every request carries `token`.
+- `load {date}` → `{ target, presets, entries, url }`
+- `saveDay {date, entries, target}`: validates everything, then deletes that date's rows, appends the snapshot, and upserts `Daily Targets` (removed when the day is empty)
+- `saveTarget {target}`; `savePreset {preset}` (adds only if the name is new)
+- Script lock around every action. Errors return `{ ok:false, error }`.
+
+## Sheet / Apps Script rules
+- Deploy as a Web app: "Execute as: Me, Access: Anyone". Token lives in Script Properties (`TOKEN`), never in code. Dev and real Sheets have different tokens and URLs.
+- **Never commit the Apps Script URL, token or Sheet link** (public repo).
+- After changing `Code.gs`, the user must paste it into each Sheet and use Deploy → Manage deployments → ✏️ → New version (keeps the URL). "New deployment" would change the URL.
+- Test against the dev Sheet, never the real one.
+
+## UI (refined terminal, decided through mockups)
+- Order: header (`FOOD_TRACKER_` + date + sync badge) → ADD FOOD form → TOTALS → TODAY → TARGET → Reset day / Sync now → ⚙ Sync settings.
+- Tokens: bg `#000`, text `#dedede`, muted `#8e8c87`, lines `#2a2927`, fields `#111`, orange `#e84f17`, red `#ff4b3a`. Macro colours: carbs `#e9b44c`, protein `#e84f17`, fats `#5fb3a3`; kcal white.
+- Font: IBM Plex Mono from Google Fonts. The offline fallback (Courier New / phone monospace) is accepted; don't self-host.
+- Form: preset select; meal + name; one row of four inputs `KCAL / CARBS g / PROT g / FATS g`; `+ Add` and `Save preset` (shows "Preset exists" on a duplicate name; adding food never checks presets).
+- Totals: 2×2 tiles (KCAL, CARBS, PROT, FATS) whose background fills left to right in the macro colour; over target → red fill, red edge and a slight glow. The target field shows the current target.
+- Today: two-line rows (name + kcal; meal · g C · g P · g F, with C/P/F letters in macro colours). Tapping a row opens the editor sheet.
+- Editor: never auto-focus a field (no keyboard pop-up). Save, Cancel, Delete (two-tap). Star at the right end of the EDIT ENTRY heading: ☆ if no preset has the current name (tap saves the editor's values as a preset), ★ if one exists (tap does nothing).
+- Reset day: two-tap confirm ("Confirm?"). Sync now: shows "last sync HH:MM" right-aligned underneath. Badge: `● synced` green / `● unsynced` orange / hidden if sync isn't set up.
+- Sync settings: Apps Script URL, token, Save, Test, Open sheet ↗. CSV export was removed (the Sheet replaces it).
+
+## Decided not to do
+- Per-entry timestamps (only the date matters).
+- Editing past days in the app.
+- Blank separator rows in the Sheet (reliability).
+- Fixing the "app left open across midnight" display edge case (never happened in 3 years).
+
+## Known leftovers (flag, don't fix unasked)
+- `saveFrequent()` builds its object with a duplicate `c` key (harmless).
+- `foodHistory` duplicates what can be derived from `foodEntries`.
 
 ## Migration notes
-- Old app is an APK with the files bundled inside it; USB/WebView debugging could not be established, so the 2+ years of history stay in the old APK. Keep the old APK installed.
-- Frequent foods were recovered from screenshots into `frequent_foods.csv` (14 items). Seed list only; after import, presets live in the Sheet.
+- The old APK keeps 2+ years of history (it couldn't be extracted). Keep it installed.
 
 ## Working preferences (important)
-- Build on existing code; make the smallest targeted change per step.
-- Preserve existing functionality, IDs, and styling unless the change is the point.
+- **Explain every change and get explicit confirmation before editing files, committing or pushing.** Approval for one step doesn't carry over to the next.
+- Build on existing code; make the smallest targeted change per step. Preserve existing functionality, IDs and styling unless the change is the point.
 - No silent cleanup or unrequested features. Flag issues instead of fixing them unasked.
-- One logical change per commit, with a clear commit message.
+- One logical change per commit, with a clear commit message. Push only when the user says so.
+- UI changes: mockups first (private claude.ai artifact the user opens on PC and phone), then implement.
+- The user tests in VS Code Live Server (dev Sheet) before a commit is pushed, then on the phone via the Pages URL.
 - Explanations: concise, bullet points, direct. No filler.
-- User previews in VS Code Live Server and on the phone via the Pages URL.
-
-## Current design (not locked in; the UI overhaul may change it)
-- Terminal-like: black background `#000`; container `#020202`, max-width 600px, 20px padding, 8px radius, 1px `#c6c5c2` outline.
-- Orange `#e84f17` headings, buttons, labels; gray inputs `#c6c5c2`; text `#dedede`; over-target values red.
-- Reset/CSV buttons `#dc3545` (hover `#c82333`); button hover `#218838`.
-- Body font Courier New monospace; headings Roboto; numeric inputs 120px wide.
-- Food list is sentence-style: `Chicken • 400 kcal | 20 g C, 50 g P, 10 g F`, with the name and macro letters in orange.
+- Update this file in one go at the end of a piece of work, not after every step.
