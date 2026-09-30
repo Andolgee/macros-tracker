@@ -159,7 +159,7 @@ button.ghost:hover{ background:#1a0d07; }
 .open-sheet{ width:100%; margin-top:10px; }
 
 /* ===== DANGER BUTTONS (two-tap confirm) ===== */
-button.danger{ background:transparent; color:var(--red); border-color:#5a1f19; }
+button.danger{ background:transparent; color:var(--red); border-color:#5a1f19; white-space:nowrap; }
 button.danger:hover{ background:#1a0605; }
 button.danger.armed{ background:var(--red); color:#000; border-color:var(--red); }
 

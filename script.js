@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         btn.classList.add('armed');
-        btn.textContent = 'Tap again to confirm';
+        btn.textContent = 'Confirm?';
         setTimeout(()=>{
             if(btn.classList.contains('armed')){
                 btn.classList.remove('armed');
