@@ -284,7 +284,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 parseFloat(protInp.value),
                 parseFloat(fatInp.value)
             );
-            if(added) markPresetPending(nameInp.value);
+            if(added){
+                markPresetPending(nameInp.value);
+            }else{
+                saveFreqBtn.textContent = 'Preset exists';
+                setTimeout(()=>{ saveFreqBtn.textContent = 'Save preset'; }, 1500);
+            }
 
             loadFrequent();
         }
@@ -497,6 +502,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         editName.removeAttribute('aria-invalid');
 
+        updateStar();
         editor.hidden = false;
         editSheet.focus({ preventScroll:true });   // the sheet, not a field, so no keyboard pops up
         document.addEventListener('keydown', onEditorKey);
@@ -550,6 +556,30 @@ document.addEventListener('DOMContentLoaded', () => {
         changeToday(list=>list.filter(x=>x.id!==id));
         closeEditor();
     }));
+
+    // Star: ☆ = no preset with this name yet (tap saves the editor's values as one), ★ = already a preset
+    const editStar = document.getElementById('edit-star');
+
+    function updateStar(){
+        const name     = editName.value.trim();
+        const isPreset = readJSON('frequentFoods','[]').some(p=>p.name===name);
+        editStar.textContent = isPreset ? '★' : '☆';
+        editStar.classList.toggle('on', isPreset);
+        editStar.setAttribute('aria-label', isPreset ? 'Already a saved preset' : 'Save as preset');
+    }
+
+    editName.addEventListener('input', updateStar);
+
+    editStar.addEventListener('click', ()=>{
+        if(editStar.classList.contains('on')) return;
+        const vals = readEditor();
+        if(!vals) return;
+        if(saveFrequent(vals.name, vals.calories, vals.carbs, vals.proteins, vals.fats)){
+            markPresetPending(vals.name);
+            loadFrequent();
+        }
+        updateStar();
+    });
 
     document.getElementById('edit-cancel').addEventListener('click', closeEditor);
     editor.addEventListener('click', e=>{ if(e.target === editor) closeEditor(); });
