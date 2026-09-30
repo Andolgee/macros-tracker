@@ -74,22 +74,32 @@
         <section id="output-section" class="sec">
             <h2 class="label">TOTALS</h2>
 
-            <div id="totals">
-                <p>Calories: <span id="total-calories">0</span> /
-                   <span id="target-total-calories">0</span>
-                   (Left: <span id="left-calories" class="left-value">0</span>)</p>
-
-                <p>Carbohydrates: <span id="total-carbs">0</span>g /
-                   <span id="target-total-carbs">0</span>g
-                   (Left: <span id="left-carbs" class="left-value">0</span>g)</p>
-
-                <p>Proteins: <span id="total-proteins">0</span>g /
-                   <span id="target-total-proteins">0</span>g
-                   (Left: <span id="left-proteins" class="left-value">0</span>g)</p>
-
-                <p>Fats: <span id="total-fats">0</span>g /
-                   <span id="target-total-fats">0</span>g
-                   (Left: <span id="left-fats" class="left-value">0</span>g)</p>
+            <!-- each tile fills left to right (--pct) as the total approaches its target -->
+            <div id="totals" class="tiles">
+                <div class="tile t-calories" id="tile-calories">
+                    <span class="k">KCAL</span>
+                    <span class="l"><span id="left-calories">0</span> <span class="lw">left</span></span>
+                    <span class="v"><span id="total-calories">0</span>
+                        <i>/ <span id="target-total-calories">0</span></i></span>
+                </div>
+                <div class="tile t-carbs" id="tile-carbs">
+                    <span class="k">CARBS</span>
+                    <span class="l"><span id="left-carbs">0</span>g <span class="lw">left</span></span>
+                    <span class="v"><span id="total-carbs">0</span>g
+                        <i>/ <span id="target-total-carbs">0</span>g</i></span>
+                </div>
+                <div class="tile t-proteins" id="tile-proteins">
+                    <span class="k">PROT</span>
+                    <span class="l"><span id="left-proteins">0</span>g <span class="lw">left</span></span>
+                    <span class="v"><span id="total-proteins">0</span>g
+                        <i>/ <span id="target-total-proteins">0</span>g</i></span>
+                </div>
+                <div class="tile t-fats" id="tile-fats">
+                    <span class="k">FATS</span>
+                    <span class="l"><span id="left-fats">0</span>g <span class="lw">left</span></span>
+                    <span class="v"><span id="total-fats">0</span>g
+                        <i>/ <span id="target-total-fats">0</span>g</i></span>
+                </div>
             </div>
         </section>
 

@@ -78,10 +78,38 @@ button:hover{ background:#cf4512; }
 button.ghost{ background:transparent; color:var(--orange); }
 button.ghost:hover{ background:#1a0d07; }
 
-/* ===== TOTALS ===== */
-#totals{ display:grid; gap:6px; font-variant-numeric:tabular-nums; }
-#totals p{ margin:0; color:var(--ink); }
-.left-value.negative{ color:var(--red); }
+/* ===== TOTALS (tiles that fill as progress bars) ===== */
+.tiles{ display:grid; grid-template-columns:1fr 1fr; gap:8px; font-variant-numeric:tabular-nums; }
+.tile{
+    --tc:222,222,222;       /* tile colour (r,g,b) */
+    --ta:.2;                /* fill strength */
+    position:relative; overflow:hidden; isolation:isolate;
+    display:grid; grid-template-columns:1fr auto; row-gap:4px;
+    padding:10px;
+    border:1px solid rgba(var(--tc),.3);
+    border-radius:4px;
+}
+.tile::before{
+    content:""; position:absolute; inset:0 auto 0 0; z-index:-1;
+    width:var(--pct, 0%);
+    background:rgba(var(--tc), var(--ta));
+    border-right:1px solid rgba(var(--tc), .75);
+}
+.tile .k{ font-size:11px; font-weight:600; letter-spacing:.12em; color:rgb(var(--tc)); }
+.tile .l{ font-size:11px; color:var(--mute); text-align:right; }
+.tile .v{ grid-column:1 / 3; font-size:19px; font-weight:600; line-height:1.2; }
+.tile .v i{ display:block; font-style:normal; font-size:11px; font-weight:400; color:var(--mute); }
+.t-calories{ --tc:222,222,222; --ta:.12; }
+.t-carbs   { --tc:233,180,76; }
+.t-proteins{ --tc:232,79,23; }
+.t-fats    { --tc:95,179,163; }
+/* over target: red fill, red edge, slight glow */
+.tile.over{
+    border-color:rgba(255,75,58,.75);
+    box-shadow:0 0 10px rgba(255,75,58,.3), inset 0 0 8px rgba(255,75,58,.12);
+}
+.tile.over::before{ background:rgba(255,75,58,.22); border-right:0; }
+.tile.over .l{ color:var(--red); }
 
 /* ===== FOOD LIST (sentence style) ===== */
 .food-list{ display:grid; }

@@ -56,26 +56,25 @@ document.addEventListener('DOMContentLoaded', () => {
         return Date.now().toString(36) + Math.random().toString(36).slice(2,8);
     }
 
-    function updateColor(el,val){
-        val < 0 ? el.classList.add('negative')
-                : el.classList.remove('negative');
+    // One tile: "X left" or "+X over", fill width, red when over target
+    function updateTile(key, leftEl){
+        const total  = dailyTotals[key];
+        const target = targetTotals[key];
+        const left   = target - total;
+        const over   = left < 0;
+        const tile   = document.getElementById('tile-' + key);
+
+        leftEl.textContent = over ? '+' + fmt(-left) : fmt(left);
+        tile.querySelector('.lw').textContent = over ? 'over' : 'left';
+        tile.classList.toggle('over', over);
+        tile.style.setProperty('--pct', Math.min(100, target ? total/target*100 : 0) + '%');
     }
 
     function updateLeft(){
-        const lC  = targetTotals.calories - dailyTotals.calories;
-        const lCa = targetTotals.carbs    - dailyTotals.carbs;
-        const lPr = targetTotals.proteins - dailyTotals.proteins;
-        const lF  = targetTotals.fats     - dailyTotals.fats;
-
-        leftCal.textContent = fmt(lC);
-        leftCar.textContent = lCa.toFixed(1);
-        leftPro.textContent = lPr.toFixed(1);
-        leftFat.textContent = lF.toFixed(1);
-
-        updateColor(leftCal,lC);
-        updateColor(leftCar,lCa);
-        updateColor(leftPro,lPr);
-        updateColor(leftFat,lF);
+        updateTile('calories', leftCal);
+        updateTile('carbs',    leftCar);
+        updateTile('proteins', leftPro);
+        updateTile('fats',     leftFat);
     }
 
     function updateTotals(c,ca,pr,f){
@@ -302,10 +301,11 @@ document.addEventListener('DOMContentLoaded', () => {
         targetTotals.proteins = (tc*0.3)/4;
         targetTotals.fats     = (tc*0.3)/9;
 
-        tgtCal.textContent = targetTotals.calories;
-        tgtCar.textContent = targetTotals.carbs.toFixed(1);
-        tgtPro.textContent = targetTotals.proteins.toFixed(1);
-        tgtFat.textContent = targetTotals.fats.toFixed(1);
+        tgtCal.textContent = fmt(targetTotals.calories);
+        tgtCar.textContent = fmt(targetTotals.carbs);
+        tgtPro.textContent = fmt(targetTotals.proteins);
+        tgtFat.textContent = fmt(targetTotals.fats);
+        tgtCalInp.value    = tc;
 
         updateLeft();
     }
