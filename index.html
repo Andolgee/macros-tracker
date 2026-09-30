@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Food Tracker</title>
 
+    <!-- fonts (falls back to Courier New / system monospace when offline) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" />
+
     <!-- styles -->
     <link rel="stylesheet" href="style.css" />
 
@@ -15,62 +20,59 @@
 </head>
 <body>
     <div class="container">
-        <h1>FOOD TRACKER</h1>
+
+        <!-- ========= HEADER ========= -->
+        <header class="top">
+            <h1 class="brand">FOOD_TRACKER<span class="cursor">_</span></h1>
+            <div class="meta"><span id="today-date"></span></div>
+        </header>
 
         <!-- ========= INPUT ========= -->
-        <div id="input-section">
-            <h2>Enter nutrition info</h2>
+        <section id="input-section" class="sec">
+            <h2 class="label">ADD FOOD</h2>
 
             <form id="food-form">
-                <label for="frequent-foods">Frequent Foods:</label>
-                <select id="frequent-foods">
-                    <option value="">Select a frequent food</option>
-                </select>
+                <label class="field"><span>PRESET</span>
+                    <select id="frequent-foods">
+                        <option value="">Select a frequent food</option>
+                    </select>
+                </label>
 
-                <label for="meal">Meal:</label>
-                <select id="meal" required>
-                    <option value="breakfast">Breakfast</option>
-                    <option value="lunch">Lunch</option>
-                    <option value="dinner">Dinner</option>
-                    <option value="snack">Snack</option>
-                </select>
+                <div class="row2">
+                    <label class="field"><span>MEAL</span>
+                        <select id="meal" required>
+                            <option value="breakfast">Breakfast</option>
+                            <option value="lunch">Lunch</option>
+                            <option value="dinner">Dinner</option>
+                            <option value="snack">Snack</option>
+                        </select>
+                    </label>
+                    <label class="field"><span>NAME</span>
+                        <input type="text" id="food-name" autocomplete="off" required>
+                    </label>
+                </div>
 
-                <label for="food-name">Food Name:</label>
-                <input type="text" id="food-name" required>
+                <div class="macros">
+                    <label class="field"><span>KCAL</span>
+                        <input type="number" id="calories" class="macro-input" step="any" inputmode="decimal" required></label>
+                    <label class="field"><span>CARBS g</span>
+                        <input type="number" id="carbs" class="macro-input" step="any" inputmode="decimal" required></label>
+                    <label class="field"><span>PROT g</span>
+                        <input type="number" id="proteins" class="macro-input" step="any" inputmode="decimal" required></label>
+                    <label class="field"><span>FATS g</span>
+                        <input type="number" id="fats" class="macro-input" step="any" inputmode="decimal" required></label>
+                </div>
 
-                <label for="calories">Calories:</label>
-                <input type="number" id="calories" class="macro-input" step="any" required>
-
-                <label for="carbs">Carbohydrates&nbsp;(g):</label>
-                <input type="number" id="carbs" class="macro-input" step="any" required>
-
-                <label for="proteins">Proteins&nbsp;(g):</label>
-                <input type="number" id="proteins" class="macro-input" step="any" required>
-
-                <label for="fats">Fats&nbsp;(g):</label>
-                <input type="number" id="fats" class="macro-input" step="any" required>
-
-                <button type="submit">Add Food</button>
+                <div class="btns">
+                    <button type="submit">+ Add</button>
+                    <button type="button" id="save-frequent-food" class="ghost">Save preset</button>
+                </div>
             </form>
-
-            <button id="save-frequent-food">Save Frequent Food</button>
-
-            <!-- ========= FOOD LIST ========= -->
-            <h2>Today's Food</h2>
-            <div id="food-list" class="food-list"></div>
-        </div>
-
-        <!-- ========= TARGET ========= -->
-        <div id="target-section">
-            <h2>Set Daily Target</h2>
-            <label for="target-calories">Target Calories:</label>
-            <input type="number" id="target-calories" class="macro-input" step="any" required>
-            <button id="set-target">Set Target</button>
-        </div>
+        </section>
 
         <!-- ========= TOTALS ========= -->
-        <div id="output-section">
-            <h2>Daily Totals</h2>
+        <section id="output-section" class="sec">
+            <h2 class="label">TOTALS</h2>
 
             <div id="totals">
                 <p>Calories: <span id="total-calories">0</span> /
@@ -89,21 +91,43 @@
                    <span id="target-total-fats">0</span>g
                    (Left: <span id="left-fats" class="left-value">0</span>g)</p>
             </div>
+        </section>
 
+        <!-- ========= FOOD LIST ========= -->
+        <section class="sec">
+            <h2 class="label">TODAY</h2>
+            <div id="food-list" class="food-list"></div>
+        </section>
+
+        <!-- ========= TARGET ========= -->
+        <section id="target-section" class="sec">
+            <h2 class="label">TARGET</h2>
+            <div class="target-row">
+                <label class="field"><span>DAILY KCAL</span>
+                    <input type="number" id="target-calories" class="macro-input" step="any" inputmode="decimal" required>
+                </label>
+                <button id="set-target" class="ghost">Set</button>
+            </div>
+        </section>
+
+        <!-- ========= RESET / CSV ========= -->
+        <div class="foot">
             <button id="reset-totals">Reset</button>
-            <button id="save-csv">Save as CSV</button>
+            <button id="save-csv" class="ghost">Save as CSV</button>
         </div>
 
         <!-- ========= SYNC SETTINGS ========= -->
         <details id="sync-settings">
-            <summary>⚙ Sync settings</summary>
-            <label for="sync-url">Apps Script URL:</label>
-            <input type="url" id="sync-url">
-            <label for="sync-token">Token:</label>
-            <input type="password" id="sync-token">
-            <button id="save-sync">Save</button>
-            <button id="test-sync">Test</button>
-            <span id="sync-status"></span>
+            <summary>⚙ SYNC SETTINGS</summary>
+            <label class="field"><span>APPS SCRIPT URL</span>
+                <input type="url" id="sync-url"></label>
+            <label class="field"><span>TOKEN</span>
+                <input type="password" id="sync-token"></label>
+            <div class="sync-btns">
+                <button id="save-sync" class="ghost">Save</button>
+                <button id="test-sync" class="ghost">Test</button>
+                <span id="sync-status"></span>
+            </div>
         </details>
     </div>
 

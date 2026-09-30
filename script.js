@@ -667,6 +667,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* === INITIAL LOAD === */
 
+    document.getElementById('today-date').textContent =
+        new Date().toLocaleDateString(undefined, { weekday:'short', day:'numeric', month:'short' }).toUpperCase();
+
     loadFrequent();
     loadTotals();
     loadEntries();
