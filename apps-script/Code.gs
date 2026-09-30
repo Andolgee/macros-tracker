@@ -65,7 +65,7 @@ function handle(req) {
 
 /* === ACTIONS === */
 
-// Target, presets, and one date's entries
+// Target, presets, one date's entries, and the Sheet's own link (for the app's Open sheet button)
 function load(ss, req) {
     const date = checkDate(req.date);
     const tz = ss.getSpreadsheetTimeZone();
@@ -84,7 +84,7 @@ function load(ss, req) {
             calories: Number(r[1]), carbs: Number(r[2]), proteins: Number(r[3]), fats: Number(r[4])
         }));
 
-    return { ok: true, target: getTarget(ss), presets, entries };
+    return { ok: true, target: getTarget(ss), presets, entries, url: ss.getUrl() };
 }
 
 // Replace all rows for one date with the app's snapshot; record that day's target
