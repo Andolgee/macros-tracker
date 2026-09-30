@@ -91,19 +91,30 @@ document.addEventListener('DOMContentLoaded', () => {
         updateLeft();
     }
 
-    /* === FOOD LINE BUILDER === */
+    /* === FOOD ROW BUILDER === */
+    const MEALS = { breakfast:'Breakfast', lunch:'Lunch', dinner:'Dinner', snack:'Snack' };
+
+    // Escape text before putting it into HTML (names can come from the Sheet)
+    function esc(s){
+        return String(s).replace(/[&<>"]/g, c=>({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+    }
+
+    // Two lines: name + kcal, then meal · C · P · F (tap to edit)
     function addLine(entry){
-        const p = document.createElement('p');
-        p.className = 'food-line';
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = 'food-row';
+        row.dataset.id = entry.id;
 
-        p.innerHTML =
-            `<span class="food-name">${entry.name}</span>`+
-            ` • ${entry.calories} kcal | `+
-            `${entry.carbs} g <span class="macro-label">C</span>, `+
-            `${entry.proteins} g <span class="macro-label">P</span>, `+
-            `${entry.fats} g <span class="macro-label">F</span>`;
+        row.innerHTML =
+            `<span class="food-name">${esc(entry.name)}</span>`+
+            `<span class="food-kcal">${fmt(entry.calories)} <small>kcal</small></span>`+
+            `<span class="food-macros">${MEALS[entry.meal] || esc(entry.meal)}<i>·</i>`+
+            `${fmt(entry.carbs)} g <b class="mc">C</b><i>·</i>`+
+            `${fmt(entry.proteins)} g <b class="mp">P</b><i>·</i>`+
+            `${fmt(entry.fats)} g <b class="mf">F</b></span>`;
 
-        foodList.appendChild(p);
+        foodList.appendChild(row);
     }
 
     /* === LOCAL STORAGE: entries === */

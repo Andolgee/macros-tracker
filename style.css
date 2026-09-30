@@ -7,6 +7,9 @@
     --field:#111;
     --orange:#e84f17;
     --red:#ff4b3a;
+    --c-carbs:#e9b44c;
+    --c-prot:#e84f17;
+    --c-fats:#5fb3a3;
 }
 *{ box-sizing:border-box; }
 body{
@@ -111,22 +114,25 @@ button.ghost:hover{ background:#1a0d07; }
 .tile.over::before{ background:rgba(255,75,58,.22); border-right:0; }
 .tile.over .l{ color:var(--red); }
 
-/* ===== FOOD LIST (sentence style) ===== */
+/* ===== FOOD LIST (two-line rows, tap to edit) ===== */
 .food-list{ display:grid; }
-.food-line{
-    margin:0;
-    padding:9px 2px;
-    border-bottom:1px dashed #1c1b1a;
-    color:var(--ink);
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+.food-row{
+    display:grid; grid-template-columns:1fr auto; gap:3px 12px;
+    width:100%; text-align:left;
+    background:none; border:0; border-bottom:1px dashed #1c1b1a; border-radius:0;
+    color:var(--ink); font-weight:400; letter-spacing:0; text-transform:none;
+    padding:10px 2px;
 }
-.food-name,
-.macro-label{
-    color:var(--orange);
-    font-weight:600;
-}
+.food-row:hover{ background:#0c0c0c; }
+.food-name{ color:var(--ink); font-weight:600; overflow-wrap:anywhere; }
+.food-kcal{ color:var(--orange); font-weight:600; text-align:right; font-variant-numeric:tabular-nums; }
+.food-kcal small{ color:var(--mute); font-size:12px; font-weight:400; }
+.food-macros{ grid-column:1 / 3; color:var(--mute); font-size:12px; font-variant-numeric:tabular-nums; }
+.food-macros i{ font-style:normal; color:#4a4945; margin:0 5px; }
+.food-macros b{ font-weight:600; }
+.mc{ color:var(--c-carbs); }
+.mp{ color:var(--c-prot); }
+.mf{ color:var(--c-fats); }
 
 /* ===== TARGET ===== */
 .target-row{ display:grid; grid-template-columns:1fr auto; gap:8px; align-items:end; }
