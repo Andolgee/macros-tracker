@@ -1,5 +1,5 @@
 /* Service worker: network-first, falls back to cache when offline */
-const CACHE = 'food-tracker-v1';
+const CACHE = 'food-tracker-v2';
 const ASSETS = [
     './',
     'index.html',
@@ -11,7 +11,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', e => {
-    e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)));
+    e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS.map(a => new Request(a, { cache: 'no-cache' })))));
     self.skipWaiting();
 });
 
@@ -26,7 +26,8 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
     if (e.request.method !== 'GET' || new URL(e.request.url).origin !== location.origin) return;
     e.respondWith(
-        fetch(e.request)
+        // no-cache: always ask the server if the file changed (skips the browser's 10-minute copy)
+        fetch(e.request, { cache: 'no-cache' })
             .then(res => {
                 const copy = res.clone();
                 caches.open(CACHE).then(c => c.put(e.request, copy));
