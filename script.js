@@ -57,6 +57,24 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // One tile: "X left" or "+X over", fill width, red when over target
+    // Destructive buttons need a second tap within 3s
+    function armed(btn, label, doIt){
+        if(btn.classList.contains('armed')){
+            btn.classList.remove('armed');
+            btn.textContent = label;
+            doIt();
+            return;
+        }
+        btn.classList.add('armed');
+        btn.textContent = 'Tap again to confirm';
+        setTimeout(()=>{
+            if(btn.classList.contains('armed')){
+                btn.classList.remove('armed');
+                btn.textContent = label;
+            }
+        }, 3000);
+    }
+
     function updateTile(key, leftEl){
         const total  = dailyTotals[key];
         const target = targetTotals[key];
@@ -444,6 +462,97 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
         document.body.removeChild(link);
     });
+
+    /* === EDIT / DELETE ENTRY === */
+
+    const editor     = document.getElementById('editor');
+    const editSheet  = editor.querySelector('.sheet');
+    const editMeal   = document.getElementById('edit-meal');
+    const editName   = document.getElementById('edit-name');
+    const editNums   = {
+        calories: document.getElementById('edit-calories'),
+        carbs:    document.getElementById('edit-carbs'),
+        proteins: document.getElementById('edit-proteins'),
+        fats:     document.getElementById('edit-fats')
+    };
+    const editDelBtn = document.getElementById('edit-delete');
+    let editingId = null, editOpener = null;
+
+    foodList.addEventListener('click', e=>{
+        const row = e.target.closest('.food-row');
+        if(row) openEditor(row.dataset.id, row);
+    });
+
+    function openEditor(id, opener){
+        const entry = (readJSON('foodEntries','{}')[todayKey()] || []).find(x=>x.id===id);
+        if(!entry) return;
+
+        editingId  = id;
+        editOpener = opener;
+        editMeal.value = entry.meal;
+        editName.value = entry.name;
+        Object.keys(editNums).forEach(k=>{
+            editNums[k].value = entry[k];
+            editNums[k].removeAttribute('aria-invalid');
+        });
+        editName.removeAttribute('aria-invalid');
+
+        editor.hidden = false;
+        editSheet.focus({ preventScroll:true });   // the sheet, not a field, so no keyboard pops up
+        document.addEventListener('keydown', onEditorKey);
+    }
+
+    function closeEditor(){
+        editor.hidden = true;
+        editingId = null;
+        editDelBtn.classList.remove('armed');
+        editDelBtn.textContent = 'Delete entry';
+        document.removeEventListener('keydown', onEditorKey);
+        if(editOpener && editOpener.isConnected) editOpener.focus();
+    }
+
+    function onEditorKey(e){ if(e.key === 'Escape') closeEditor(); }
+
+    // Editor values, or null if the name is empty or a number is missing
+    function readEditor(){
+        const name = editName.value.trim();
+        const vals = { meal:editMeal.value, name };
+        let ok = !!name;
+        editName.setAttribute('aria-invalid', String(!name));
+        Object.keys(editNums).forEach(k=>{
+            const v   = parseFloat(editNums[k].value);
+            const bad = !isFinite(v) || v < 0;
+            editNums[k].setAttribute('aria-invalid', String(bad));
+            if(bad) ok = false; else vals[k] = v;
+        });
+        return ok ? vals : null;
+    }
+
+    // Apply a change to today's entries, then redraw, recompute totals and sync
+    function changeToday(fn){
+        const all = readJSON('foodEntries','{}');
+        all[todayKey()] = fn(all[todayKey()] || []);
+        localStorage.setItem('foodEntries', JSON.stringify(all));
+        rebuildToday();
+        markDayPending(todayKey());
+    }
+
+    document.getElementById('edit-save').addEventListener('click', ()=>{
+        const vals = readEditor();
+        if(!vals) return;
+        const id = editingId;
+        changeToday(list=>list.map(x=> x.id===id ? Object.assign({}, x, vals) : x));
+        closeEditor();
+    });
+
+    editDelBtn.addEventListener('click', ()=>armed(editDelBtn, 'Delete entry', ()=>{
+        const id = editingId;
+        changeToday(list=>list.filter(x=>x.id!==id));
+        closeEditor();
+    }));
+
+    document.getElementById('edit-cancel').addEventListener('click', closeEditor);
+    editor.addEventListener('click', e=>{ if(e.target === editor) closeEditor(); });
 
     /* === SYNC SETTINGS === */
 

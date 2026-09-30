@@ -151,5 +151,30 @@ button.ghost:hover{ background:#1a0d07; }
 .sync-btns button{ padding-inline:18px; }
 #sync-status{ color:var(--ink); font-size:12px; }
 
+/* ===== DANGER BUTTONS (two-tap confirm) ===== */
+button.danger{ background:transparent; color:var(--red); border-color:#5a1f19; }
+button.danger:hover{ background:#1a0605; }
+button.danger.armed{ background:var(--red); color:#000; border-color:var(--red); }
+
+/* ===== EDIT ENTRY SHEET ===== */
+.overlay{
+    position:fixed; inset:0; z-index:50;
+    display:flex; align-items:flex-end; justify-content:center;
+    background:rgba(0,0,0,.62);
+}
+.overlay[hidden]{ display:none; }
+.sheet{
+    width:100%; max-width:560px; max-height:88vh; overflow:auto;
+    display:grid; gap:12px;
+    background:#050505; border-top:1px solid var(--orange);
+    padding:16px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+.sheet:focus{ outline:none; }
+input[aria-invalid="true"]{ border-color:var(--red); }
+@media (prefers-reduced-motion:no-preference){
+    .sheet{ animation:sheet-up .18s ease-out; }
+    @keyframes sheet-up{ from{ transform:translateY(24px); opacity:.4; } to{ transform:none; opacity:1; } }
+}
+
 /* legacy table styles kept (unused) */
 #food-table{display:none;}

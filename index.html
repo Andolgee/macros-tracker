@@ -141,6 +141,43 @@
         </details>
     </div>
 
+    <!-- ========= EDIT ENTRY (opens when a food row is tapped) ========= -->
+    <div id="editor" class="overlay" hidden>
+        <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="editor-title" tabindex="-1">
+            <h2 class="label"><span id="editor-title">EDIT ENTRY</span></h2>
+
+            <div class="row2">
+                <label class="field"><span>MEAL</span>
+                    <select id="edit-meal">
+                        <option value="breakfast">Breakfast</option>
+                        <option value="lunch">Lunch</option>
+                        <option value="dinner">Dinner</option>
+                        <option value="snack">Snack</option>
+                    </select>
+                </label>
+                <label class="field"><span>NAME</span>
+                    <input type="text" id="edit-name" autocomplete="off"></label>
+            </div>
+
+            <div class="macros">
+                <label class="field"><span>KCAL</span>
+                    <input type="number" id="edit-calories" step="any" inputmode="decimal"></label>
+                <label class="field"><span>CARBS g</span>
+                    <input type="number" id="edit-carbs" step="any" inputmode="decimal"></label>
+                <label class="field"><span>PROT g</span>
+                    <input type="number" id="edit-proteins" step="any" inputmode="decimal"></label>
+                <label class="field"><span>FATS g</span>
+                    <input type="number" id="edit-fats" step="any" inputmode="decimal"></label>
+            </div>
+
+            <div class="btns">
+                <button type="button" id="edit-save">Save</button>
+                <button type="button" id="edit-cancel" class="ghost">Cancel</button>
+            </div>
+            <button type="button" id="edit-delete" class="danger">Delete entry</button>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
